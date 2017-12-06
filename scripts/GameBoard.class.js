@@ -1,6 +1,6 @@
 import {EmptyBlock} from './EmptyBlock.class';
 import {Figure} from './Figure.class';
-import {LocalStorageService} from './localStorage';
+import {localStorageObject} from './localStorage';
 
 const GAME_BOARD_SIZE = 550,
     MIN_SPEED = 1000,
@@ -11,28 +11,19 @@ let blocksOnPage,
     currentSpeed,
     elementsOnBoard,
     intervalID,
-    gameFinishedFlag,
-    numberOfBlocks;
-
-function checkInputValue() {
-    let value = +document.querySelector('#number').value;
-
-    return value >= 9 && value <= 15 ? value : 9;
-}
+    gameFinishedFlag;
 
 function setInitValues() {
     blocksOnPage = [];
     currentSpeed = 2500;
-    currentScore = parseInt(LocalStorageService.getFromStorage().get('currentScore')) || 0;
+    currentScore = parseInt(localStorageObject.getFromStorage().get('currentScore')) || 0;
     elementsOnBoard = [];
     gameFinishedFlag = false;
-    numberOfBlocks = checkInputValue();
-    EmptyBlock.setWidth((GAME_BOARD_SIZE / numberOfBlocks).toFixed(1) + 'px');
 }
 
 export class GameBoard {
-    constructor() {
-        this.gameBoard;
+    constructor(numberOfBlocks) {
+        this.size = numberOfBlocks;
         this.scoreElement = document.getElementById('score');
         this.updateScoreElement();
         setInitValues();
@@ -41,45 +32,45 @@ export class GameBoard {
     }
 
     get middle() {
-        return Math.floor(numberOfBlocks / 2);
+        return Math.floor(this.size / 2);
     }
 
     addNewElement() {
         let newElem = new Figure(),
-            pointsXOfNewElem = newElem.block.map(item => item[1]),
+            pointsXOfNewElem = newElem.figure.blocks.map(item => item[1]),
             middle = this.middle - Math.floor(Math.max(...pointsXOfNewElem) / 2);
 
-        newElem.block = newElem.block.map(item => [item[0], item[1] + middle]);
+        newElem.figure.blocks = newElem.figure.blocks.map(item => [item[0], item[1] + middle]);
 
         if (newElem.canAddToBoard()) {
             elementsOnBoard.push(newElem);
         } else {
-            document.removeEventListener('keydown', this.executeKeyDownAction);
             this.finishGame();
         }
-        newElem.drawElementOnBoard(newElem.index);
+        newElem.drawElementOnBoard(newElem.figure.color);
     }
 
     checkScore() {
         for (let i = 0; i < blocksOnPage.length; ++i) {
-            if(!blocksOnPage[i].map(item => item.box.className).includes('block-empty')) {
+            if(!blocksOnPage[i].map(item => item.isEmpty()).includes(true)) {
                 this.levelup();
-                elementsOnBoard.forEach(item => item.redrawElement(() => item.block = item.block.filter(elem => elem[0] !== i)));
+                elementsOnBoard.forEach(item => item.redrawElement(() => item.figure.blocks = item.figure.blocks.filter(elem => elem[0] !== i)));
             }
         }
 
-        elementsOnBoard = elementsOnBoard.filter(elem => elem.block.length !== 0);
+        elementsOnBoard = elementsOnBoard.filter(elem => elem.figure.blocks.length !== 0);
     }
 
     drawGameBoard() {
         this.gameBoard = document.createElement('div');
         this.gameBoard.className = 'game';
         document.body.appendChild(this.gameBoard);
+        EmptyBlock.setWidth((GAME_BOARD_SIZE / this.size).toFixed(1) + 'px');
 
-        for (let i = 0; i < numberOfBlocks; ++i) {
+        for (let i = 0; i < this.size; ++i) {
             blocksOnPage.push([]);
-            for (let j = 0; j < numberOfBlocks; ++j) {
-                blocksOnPage[i][j] = new EmptyBlock(GAME_BOARD_SIZE, numberOfBlocks);
+            for (let j = 0; j < this.size; ++j) {
+                blocksOnPage[i][j] = new EmptyBlock(GAME_BOARD_SIZE, this.size);
                 this.gameBoard.appendChild(blocksOnPage[i][j].box);
             }
         }
@@ -103,20 +94,22 @@ export class GameBoard {
     }
 
     finishGame() {
-        LocalStorageService.updateStorage();
+        document.removeEventListener('keydown', this.executeKeyDownAction);
+        localStorageObject.updateStorage();
         gameFinishedFlag = true;
         clearInterval(intervalID);
     }
 
     levelup() {
-        currentScore += numberOfBlocks;
-        LocalStorageService.addValueToStorage('currentScore', currentScore);
+        currentScore += this.size;
+        localStorageObject.addValueToStorage('currentScore', currentScore);
         this.updateScoreElement();
 
         currentSpeed = currentSpeed === MIN_SPEED ? currentSpeed : currentSpeed - SPEED_REDUCTION;
     }
 
     startGame() {
+        document.addEventListener('keydown', this.executeKeyDownAction);
         clearInterval(intervalID);
         this.addNewElement();
         intervalID = setInterval(() => {
@@ -140,8 +133,8 @@ export class GameBoard {
         this.scoreElement.innerText = currentScore || 0;
     }
 
-    static drawBlock(block, index) {
-        blocksOnPage[block[0]][block[1]].changeBlockStyle(index);
+    static drawBlock(block, color) {
+        blocksOnPage[block[0]][block[1]].changeBlockStyle(color);
     }
 
     static tryAddBlock(block) {
