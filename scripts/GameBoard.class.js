@@ -16,7 +16,7 @@ let blocksOnPage,
 function setInitValues() {
     blocksOnPage = [];
     currentSpeed = 2500;
-    currentScore = parseInt(localStorageObject.getFromStorage().get('currentScore')) || 0;
+    currentScore = gameFinishedFlag !== false ? parseInt(localStorageObject.getFromStorage().get('currentScore')) || 0 : 0;
     elementsOnBoard = [];
     gameFinishedFlag = false;
 }
@@ -81,15 +81,18 @@ export class GameBoard {
             element = elementsOnBoard[elementsOnBoard.length - 1];
 
         switch(event.keyCode) {
-        case 37: shift = -1;
+        case 32:
+            if(element.figure.center !== undefined) {
+                element.rotateFigure();
+            }
             break;
-        case 39: shift = 1;
+        case 37:
+            element.moveLeft();
             break;
-        default: shift = undefined;
-        }
-
-        if (shift && element.canMoveElement([0, shift])) {
-            element.moveBlock(1, shift);
+        case 39:
+            element.moveRight();
+            break;
+        default: return;
         }
     }
 
@@ -109,13 +112,13 @@ export class GameBoard {
     }
 
     startGame() {
+        this.updateScoreElement();
         document.addEventListener('keydown', this.executeKeyDownAction);
         clearInterval(intervalID);
         this.addNewElement();
         intervalID = setInterval(() => {
             elementsOnBoard.forEach((item, index) => {
-                if (item.canMoveElement([1, 0])) {
-                    item.moveBlock(0, 1);
+                if (item.moveDown()) {
                 } else {
                     if (index === elementsOnBoard.length - 1) {
                         this.checkScore();
