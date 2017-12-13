@@ -14,9 +14,10 @@ let blocksOnPage,
     gameFinishedFlag;
 
 export class GameBoard {
-    constructor(numberOfBlocks) {
+    constructor(numberOfBlocks, userName) {
         this.size = numberOfBlocks;
         this.scoreElement = document.getElementById('score');
+        this.userName = userName;
         this.updateScoreElement();
         this.setInitValues();
         this.drawGameBoard();
@@ -91,15 +92,21 @@ export class GameBoard {
     }
 
     finishGame() {
+        this.gameBoard.innerHTML +=
+`<div class="finished-game">` +
+    `<h3 class="finished-game__heading">GAME OVER</h3>` +
+    `<p class="finished-game__score">Your best score: ${localStorageObject.getData(this.userName) || 0}</p>` +
+`</div>`;
         document.removeEventListener('keydown', this.executeKeyDownAction);
         localStorageObject.updateStorage();
         gameFinishedFlag = true;
         clearInterval(intervalID);
+        document.getElementById('name-input').disabled = false;
     }
 
     levelup() {
         currentScore += this.size;
-        localStorageObject.addValueToStorage('currentScore', currentScore);
+        localStorageObject.addValueToStorage(this.userName, currentScore);
         this.updateScoreElement();
 
         currentSpeed = currentSpeed === MIN_SPEED ? currentSpeed : currentSpeed - SPEED_REDUCTION;

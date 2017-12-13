@@ -27,7 +27,9 @@ const BLOCKS = [
     {
         center: 0,
         color: '#81F781',
-        blocks: [[0, 1], [0, 2], [1, 0], [1, 1]]
+        blocks: [[0, 1], [0, 2], [1, 0], [1, 1]],
+        currentPosition: 0,
+        specialRotate: true
     },
     {
         center: 1,
@@ -37,7 +39,9 @@ const BLOCKS = [
     {
         center: 1,
         color: '#F78181',
-        blocks: [[0, 0], [0, 1], [1, 1], [1, 2]]
+        blocks: [[0, 0], [0, 1], [1, 1], [1, 2]],
+        currentPosition: 0,
+        specialRotate: true
     }
 ];
 
@@ -111,8 +115,6 @@ export class Figure {
             currentPosition = this.figure.currentPosition,
             oldPosX, oldPosY,
             rotatedFigureBlocks;
-
-
 
         if (this.figure.specialRotate) {
             if (currentPosition % 2 === 1) {
