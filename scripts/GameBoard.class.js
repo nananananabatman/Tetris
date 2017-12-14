@@ -47,7 +47,14 @@ export class GameBoard {
         for (let i = 0; i < blocksOnPage.length; ++i) {
             if(!blocksOnPage[i].map(item => item.isEmpty()).includes(true)) {
                 this.levelup();
-                elementsOnBoard.forEach(item => item.redrawElement(() => item.figure.blocks = item.figure.blocks.filter(elem => elem[0] !== i)));
+                elementsOnBoard.forEach(item => item.redrawElement(() => {
+                    item.figure.blocks = item.figure.blocks.filter(elem => elem[0] !== i);
+                    item.figure.blocks.forEach(elem => {
+                        if (elem[0] < i) {
+                            elem[0]++;
+                        }
+                    });
+                }));
             }
         }
 
